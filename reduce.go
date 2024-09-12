@@ -70,7 +70,13 @@ func (p *reduceProcessor) Process(ctx context.Context, inputs <-chan Record, abo
 		for in := range inputs {
 			gr := in.Group().String()
 
-			if _, ok := groups[gr]; !ok {
+			if g, ok := groups[gr]; ok {
+				// すでにコミットされたグループは無視する
+				if g.done {
+					continue
+				}
+			} else {
+				// 新しいグループの場合はグループ一覧に追加する
 				groups[gr] = &group{
 					group: in.Group(),
 					done:  false,
