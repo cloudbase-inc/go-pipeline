@@ -125,7 +125,9 @@ func TestPipeline_Execute(t *testing.T) {
 					return ctx
 				}(),
 			},
-			wantOutputs: []Record{},
+			wantOutputs: []Record{
+				testRecord{"group1_mapped_empty", "0"},
+			},
 			wantStages: []StageExecution{
 				{
 					Name: "Generator",
@@ -185,7 +187,7 @@ func TestPipeline_Execute(t *testing.T) {
 						},
 					},
 				},
-				// reducerは前段の全ての出力を待ってから処理を開始するため、timeoutが発生した場合はそのままreducerもタイムアウトになる
+				// GroupCommitによって先にコミットされたグループのみ、正常に処理される
 				{
 					Name: "Reduce",
 					Type: ProcessorTypeReduce,
@@ -196,9 +198,10 @@ func TestPipeline_Execute(t *testing.T) {
 							Err:    context.DeadlineExceeded,
 						},
 						{
-							Unit:   "group1_mapped_empty",
-							Status: OutputStatusError,
-							Err:    context.DeadlineExceeded,
+							Unit:        "group1_mapped_empty",
+							Status:      OutputStatusSuccess,
+							RecordCount: 1,
+							GroupCount:  1,
 						},
 					},
 				},
