@@ -48,7 +48,7 @@ func (o Output) Summarized() SummarizedOutput {
 	var recordCount int
 	for _, r := range o.Records {
 		groups[r.Group().String()] = struct{}{}
-		if _, ok := r.(emptyGroup); !ok {
+		if _, ok := r.(groupCommit); !ok {
 			recordCount++
 		}
 	}

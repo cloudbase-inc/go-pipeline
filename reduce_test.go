@@ -28,9 +28,12 @@ func Test_reducerProcessor_Process(t *testing.T) {
 				inputs: []Record{
 					testRecord{"group1", "id1"},
 					testRecord{"group1", "id2"},
-					testRecord{"group2", "id3"},
+					GroupCommit(GroupString("group1")),
+					testRecord{"group2", "id3"}, // ASSERT: GroupCommitされていないグループも正しく処理される
 					testRecord{"error", "id4"},
-					emptyGroup{GroupString("group3")},
+					GroupCommit(GroupString("group3")),
+					GroupCommit(GroupString("group3")), // ASSERT: 複数回同じGroupCommitが来ても無視される
+					testRecord{"group1", "id5"},        // ASSERT: GroupCommit後に流れてきたレコードは無視される
 				},
 			},
 			want: []Output{

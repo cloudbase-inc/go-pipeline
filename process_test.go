@@ -19,7 +19,7 @@ func TestOutput_Summarized(t *testing.T) {
 				Status: OutputStatusError,
 				Records: []Record{
 					testRecord{"group1", "id1"},
-					emptyGroup{GroupString("group2")},
+					GroupCommit(GroupString("group2")),
 				},
 				Err: errTestMapper,
 			},

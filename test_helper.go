@@ -34,7 +34,7 @@ func (m *testMapper) Map(ctx context.Context, input Record) ([]Record, error) {
 		return []Record{
 			testRecord{gr + "_mapped", input.Identifier() + "_1"},
 			testRecord{gr + "_mapped", input.Identifier() + "_2"},
-			emptyGroup{GroupString(gr + "_empty")},
+			GroupCommit(GroupString(gr + "_empty")),
 		}, nil
 	}
 	// Error

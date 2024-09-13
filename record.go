@@ -37,20 +37,25 @@ func (g GroupString) String() string {
 	return string(g)
 }
 
-// ReducerでRecordがないグループも扱いたい場合に使うRecord
-// Reducerのグループのリストを作成するために利用され、レコードとしては無視される
-type emptyGroup struct {
+// 特定のグループのレコードが全て出力されたことを示すレコード
+// Reducerのグループを確定させるために利用され、レコードとしては無視される
+type groupCommit struct {
 	group Group
 }
 
-func EmptyGroup(g Group) emptyGroup {
-	return emptyGroup{g}
+func GroupCommit(g Group) groupCommit {
+	return groupCommit{g}
 }
 
-func (g emptyGroup) Group() Group {
+func (g groupCommit) Group() Group {
 	return g.group
 }
 
-func (g emptyGroup) Identifier() string {
+func (g groupCommit) Identifier() string {
 	return na
+}
+
+// Deprecated: 代わりにGroupCommitを利用してください
+func EmptyGroup(g Group) groupCommit {
+	return groupCommit{g}
 }

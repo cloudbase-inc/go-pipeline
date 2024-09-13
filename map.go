@@ -51,8 +51,8 @@ func (p *mapProcessor) Process(ctx context.Context, inputs <-chan Record, abort 
 
 	go func() {
 		for in := range inputs {
-			// EmptyGroupは無視する
-			if _, ok := in.(emptyGroup); ok {
+			// GroupCommitは無視する
+			if _, ok := in.(groupCommit); ok {
 				continue
 			}
 
