@@ -65,7 +65,7 @@ func (p *mapProcessor) Process(ctx context.Context, inputs <-chan Record, abort 
 							Err:    err,
 						}
 						// abortIfAnyErrorがtrueの場合のみ、errを返して全体を止める
-						if !p.abortIfAnyError {
+						if !p.abortIfAnyError && !IsAbortError(err) {
 							err = nil
 						}
 					}

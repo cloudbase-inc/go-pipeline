@@ -91,7 +91,19 @@ func Test_mapProcessor_Process(t *testing.T) {
 			},
 		},
 		{
-			name: "abort",
+			name:   "abort",
+			mapper: newMapProcessor("test", &testMapperAbort{}),
+			args: args{
+				ctx: context.Background(),
+				inputs: []Record{
+					testRecord{"group1", "id1"},
+					testRecord{"error", "id3"},
+				},
+			},
+			wantErr: errTestMapper,
+		},
+		{
+			name: "abortIfAnyError (deprecated)",
 			mapper: func() *mapProcessor {
 				pr := newMapProcessor("test", &testMapper{})
 				pr.SetAbortIfAnyError(true)
@@ -126,7 +138,7 @@ func Test_mapProcessor_Process(t *testing.T) {
 
 			close(abort)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, tt.wantErr, <-abort)
+				assert.ErrorIs(t, <-abort, tt.wantErr)
 				return
 			}
 

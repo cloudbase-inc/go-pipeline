@@ -53,6 +53,16 @@ func (m *testMapper) Map(ctx context.Context, input Record) ([]Record, error) {
 	return nil, nil
 }
 
+type testMapperAbort struct{}
+
+func (m *testMapperAbort) Map(ctx context.Context, input Record) ([]Record, error) {
+	outputs, err := (&testMapper{}).Map(ctx, input)
+	if err != nil {
+		return nil, AbortError(err)
+	}
+	return outputs, nil
+}
+
 type testReducer struct{}
 
 var errTestReducer = fmt.Errorf("test reducer error")
@@ -88,6 +98,16 @@ func (g *testGenerator) Map(ctx context.Context, input Record) ([]Record, error)
 	}, nil
 }
 
+type testReducerAbort struct{}
+
+func (m *testReducerAbort) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
+	outputs, err := (&testReducer{}).Reduce(ctx, group, inputs)
+	if err != nil {
+		return nil, AbortError(err)
+	}
+	return outputs, nil
+}
+
 type testGeneratorTimeout struct{}
 
 // 適当に2つのレコードを生成する
@@ -105,5 +125,5 @@ type testBrokenGenerator struct{}
 var errTestBrokenGenerator = errors.New("test broken generator error")
 
 func (g *testBrokenGenerator) Map(ctx context.Context, input Record) ([]Record, error) {
-	return nil, errTestBrokenGenerator
+	return nil, AbortError(errTestBrokenGenerator)
 }

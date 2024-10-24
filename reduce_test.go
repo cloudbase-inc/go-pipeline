@@ -97,9 +97,22 @@ func Test_reducerProcessor_Process(t *testing.T) {
 			},
 		},
 		{
-			name: "abort",
+			name:    "abort",
+			reducer: newReduceProcessor("test", &testReducerAbort{}),
+			args: args{
+				ctx: context.Background(),
+				inputs: []Record{
+					testRecord{"group1", "id1"},
+					testRecord{"group2", "id2"},
+					testRecord{"error", "id3"},
+				},
+			},
+			wantErr: errTestReducer,
+		},
+		{
+			name: "abortIfAnyError (deprecated)",
 			reducer: func() *reduceProcessor {
-				pr := newReduceProcessor("test", &testReducer{})
+				pr := newReduceProcessor("test", &testReducerAbort{})
 				pr.SetAbortIfAnyError(true)
 				return pr
 			}(),
@@ -133,7 +146,7 @@ func Test_reducerProcessor_Process(t *testing.T) {
 
 			close(abort)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, tt.wantErr, <-abort)
+				assert.ErrorIs(t, <-abort, tt.wantErr)
 				return
 			}
 

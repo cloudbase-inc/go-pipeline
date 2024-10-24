@@ -38,6 +38,7 @@ func StageMaxParallel(max int) PipelineStageOption {
 	}
 }
 
+// Deprecated: 代わりにAbortErrorを利用してください
 func StageAbortIfAnyError(value bool) PipelineStageOption {
 	return func(s *PipelineStage) {
 		s.processor.SetAbortIfAnyError(value)
