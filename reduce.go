@@ -137,7 +137,7 @@ func (p *reduceProcessor) Process(ctx context.Context, inputs <-chan Record, abo
 func (p *reduceProcessor) reduce(ctx context.Context, group Group, inputs []Record) (output Output, err error) {
 	defer func() {
 		// abortIfAnyErrorがfalseの場合は、errを返す代わりにエラーステータスを持った通常レコードを返す
-		if err != nil && !p.abortIfAnyError {
+		if err != nil && !p.abortIfAnyError && !IsAbortError(err) {
 			output = Output{
 				Unit:   group.String(),
 				Status: OutputStatusError,

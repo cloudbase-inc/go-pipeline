@@ -307,6 +307,18 @@ func TestPipeline_Execute(t *testing.T) {
 			name: "abort",
 			fields: fields{
 				stages: []*PipelineStage{
+					MapStage("Generator", &testBrokenGenerator{}),
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+			},
+			wantErr: errTestBrokenGenerator,
+		},
+		{
+			name: "abortIfAnyError (deprecated)",
+			fields: fields{
+				stages: []*PipelineStage{
 					MapStage("Generator", &testBrokenGenerator{}, StageAbortIfAnyError(true)),
 				},
 			},
@@ -323,7 +335,7 @@ func TestPipeline_Execute(t *testing.T) {
 			}
 			outputs, stages, err := p.Execute(tt.args.ctx)
 			if tt.wantErr != nil {
-				assert.ErrorIs(t, tt.wantErr, err)
+				assert.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 
