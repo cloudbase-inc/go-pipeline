@@ -119,7 +119,7 @@ func (p *reduceProcessor) Process(ctx context.Context, inputs <-chan Record, abo
 
 			// GroupCommitが流れてきた場合、すぐにgroupの処理を開始して、レコードをmapから削除する
 			// こうすることで、必要以上にメモリを使用しないようにする
-			if _, ok := in.(groupCommit); ok {
+			if isGroupCommit(in) {
 				groups[gr].done = true
 				inputs := groupedInputs[gr]
 				delete(groupedInputs, gr)
