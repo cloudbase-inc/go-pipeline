@@ -11,13 +11,13 @@ type Group interface {
 }
 
 /* パイプラインの開始点を表す特殊なレコード。処理関数内では無視すること */
-type originInput struct{}
+type Origin struct{}
 
-func (o originInput) Group() Group {
+func (o Origin) Group() Group {
 	return GroupString(na)
 }
 
-func (o originInput) Identifier() string {
+func (o Origin) Identifier() string {
 	return na
 }
 

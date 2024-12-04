@@ -18,7 +18,7 @@ func New(stages ...*PipelineStage) *Pipeline {
 func (p *Pipeline) Execute(ctx context.Context) (outputs []Record, stages []StageExecution, abortErr error) {
 	originInputs := make(chan Record)
 	go func() {
-		originInputs <- originInput{}
+		originInputs <- Origin{}
 		close(originInputs)
 	}()
 

@@ -7,13 +7,45 @@ import (
 )
 
 // <group1, list(id1)> -> Reduce() -> list(<group2, id2>)
-type Reducer interface {
+// 利用者が実装する型
+type Reducer[I Record, O Record, G Group] interface {
+	Reduce(ctx context.Context, group G, inputs []I) ([]O, error)
+}
+
+// 内部処理で利用される、具体型を持ったinterface
+type reducer interface {
 	Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error)
+}
+
+// Reducerをラップしてreducerインターフェースを実装する型
+type reduceWrapper[I Record, O Record, G Group] struct {
+	reducer Reducer[I, O, G]
+}
+
+func (m *reduceWrapper[I, O, G]) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
+	g := group.(G)
+
+	var ins []I
+	for _, i := range inputs {
+		ins = append(ins, i.(I))
+	}
+
+	outs, err := m.reducer.Reduce(ctx, g, ins)
+	if err != nil {
+		return nil, err
+	}
+
+	var outputs []Record
+	for _, o := range outs {
+		outputs = append(outputs, o)
+	}
+
+	return outputs, nil
 }
 
 type reduceProcessor struct {
 	name            string
-	reducer         Reducer
+	reducer         reducer
 	maxParallel     int
 	abortIfAnyError bool
 }
@@ -22,10 +54,12 @@ type ReducerOption func(p *reduceProcessor)
 
 func (o ReducerOption) ReduceStageOption() {}
 
-func newReduceProcessor(name string, reducer Reducer, opts ...ReducerOption) *reduceProcessor {
+func newReduceProcessor[I Record, O Record, G Group](name string, reducer Reducer[I, O, G], opts ...ReducerOption) *reduceProcessor {
 	p := &reduceProcessor{
-		name:    name,
-		reducer: reducer,
+		name: name,
+		reducer: &reduceWrapper[I, O, G]{
+			reducer: reducer,
+		},
 	}
 
 	for _, opt := range opts {

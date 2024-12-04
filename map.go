@@ -7,21 +7,50 @@ import (
 )
 
 // <group1, id1> -> Mapper() -> list(<group2, id2>)
-type Mapper interface {
+// 利用者が実装する型
+type Mapper[I Record, O Record] interface {
+	Map(ctx context.Context, input I) ([]O, error)
+}
+
+// 内部処理で利用される、具体型を持ったinterface
+type mapper interface {
 	Map(ctx context.Context, input Record) ([]Record, error)
+}
+
+// Mapperをラップしてmapperインターフェースを実装する型
+type mapWrapper[I Record, O Record] struct {
+	mapper Mapper[I, O]
+}
+
+func (m *mapWrapper[I, O]) Map(ctx context.Context, input Record) ([]Record, error) {
+	i := input.(I)
+
+	outs, err := m.mapper.Map(ctx, i)
+	if err != nil {
+		return nil, err
+	}
+
+	var outputs []Record
+	for _, o := range outs {
+		outputs = append(outputs, o)
+	}
+
+	return outputs, nil
 }
 
 type mapProcessor struct {
 	name            string
-	mapper          Mapper
+	mapper          mapper
 	maxParallel     int
 	abortIfAnyError bool
 }
 
-func newMapProcessor(name string, mapper Mapper) *mapProcessor {
+func newMapProcessor[I Record, O Record](name string, mapper Mapper[I, O]) *mapProcessor {
 	return &mapProcessor{
-		name:   name,
-		mapper: mapper,
+		name: name,
+		mapper: &mapWrapper[I, O]{
+			mapper: mapper,
+		},
 	}
 }
 
