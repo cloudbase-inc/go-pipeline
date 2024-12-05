@@ -23,11 +23,11 @@ func Stage(pr Processor, opts ...PipelineStageOption) *PipelineStage {
 }
 
 // Mapper / Reducerを元にステージを組み立てるためのユーティリティ関数
-func MapStage(name string, mapper Mapper, opts ...PipelineStageOption) *PipelineStage {
+func MapStage[I Record, O Record](name string, mapper Mapper[I, O], opts ...PipelineStageOption) *PipelineStage {
 	return Stage(newMapProcessor(name, mapper), opts...)
 }
 
-func ReduceStage(name string, reducer Reducer, opts ...PipelineStageOption) *PipelineStage {
+func ReduceStage[I Record, O Record, G Group](name string, reducer Reducer[I, O, G], opts ...PipelineStageOption) *PipelineStage {
 	return Stage(newReduceProcessor(name, reducer), opts...)
 }
 

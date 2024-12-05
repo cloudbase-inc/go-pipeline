@@ -27,10 +27,10 @@ func (r *Region) Identifier() string    { return r.Name }
 
 type RegionLister struct{}
 
-func (l *RegionLister) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-	return []pipeline.Record{
-		&Region{Name: "ap-northeast-1"},
-		&Region{Name: "us-west-1"},
+func (l *RegionLister) Map(ctx context.Context, _ pipeline.Origin) ([]*Region, error) {
+	return []*Region{
+		{Name: "ap-northeast-1"},
+		{Name: "us-west-1"},
 	}, nil
 }
 
@@ -45,13 +45,11 @@ func (i *Instance) Identifier() string    { return i.ID }
 
 type VMLister struct{}
 
-func (l *VMLister) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-	region := input.(*Region)
-
+func (l *VMLister) Map(ctx context.Context, region *Region) ([]*Instance, error) {
 	if region.Name == "ap-northeast-1" {
-		return []pipeline.Record{
-			&Instance{ID: "i-123"},
-			&Instance{ID: "i-456"},
+		return []*Instance{
+			{ID: "i-123"},
+			{ID: "i-456"},
 		}, nil
 	}
 
@@ -69,16 +67,14 @@ func (v *Vulnerability) Identifier() string    { return v.Instance.ID }
 
 type Scanner struct{}
 
-func (l *Scanner) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-	instance := input.(*Instance)
-
+func (s *Scanner) Map(ctx context.Context, instance *Instance) ([]*Vulnerability, error) {
 	if instance.ID == "i-123" {
 		return nil, fmt.Errorf("failed to scan instance %s", instance.ID)
 	}
 	if instance.ID == "i-456" {
-		return []pipeline.Record{
-			&Vulnerability{ID: "CVE-2020-5678"},
-			&Vulnerability{ID: "CVE-2020-9012"},
+		return []*Vulnerability{
+			{ID: "CVE-2020-5678"},
+			{ID: "CVE-2020-9012"},
 		}, nil
 	}
 
@@ -96,11 +92,11 @@ type VulnerabilityCount struct {
 func (v *VulnerabilityCount) Group() pipeline.Group { return pipeline.GroupString(v.VulnerabilityID) }
 func (v *VulnerabilityCount) Identifier() string    { return pipeline.IdentifierNA }
 
-func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, inputs []pipeline.Record) ([]pipeline.Record, error) {
+func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, vulnerabilities []*Vulnerability) ([]*VulnerabilityCount, error) {
 	vulnerabilityID := group.String()
 
-	return []pipeline.Record{
-		&VulnerabilityCount{VulnerabilityID: vulnerabilityID, Count: len(inputs)},
+	return []*VulnerabilityCount{
+		{VulnerabilityID: vulnerabilityID, Count: len(vulnerabilities)},
 	}, nil
 }
 

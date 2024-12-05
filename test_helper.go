@@ -55,7 +55,7 @@ func (m *testMapper) Map(ctx context.Context, input Record) ([]Record, error) {
 
 type testMapperAbort struct{}
 
-func (m *testMapperAbort) Map(ctx context.Context, input Record) ([]Record, error) {
+func (m *testMapperAbort) Map(ctx context.Context, input testRecord) ([]Record, error) {
 	outputs, err := (&testMapper{}).Map(ctx, input)
 	if err != nil {
 		return nil, AbortError(err)
@@ -68,7 +68,7 @@ type testReducer struct{}
 var errTestReducer = fmt.Errorf("test reducer error")
 
 // グループごとに件数を集計する
-func (r *testReducer) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
+func (r *testReducer) Reduce(ctx context.Context, group Group, inputs []testRecord) ([]testRecord, error) {
 	// Error
 	if strings.Contains(group.String(), "error") {
 		return nil, errTestReducer
@@ -80,27 +80,27 @@ func (r *testReducer) Reduce(ctx context.Context, group Group, inputs []Record) 
 			return nil, ctx.Err()
 		case <-time.After(10 * time.Second):
 		}
-		return []Record{}, nil
+		return []testRecord{}, nil
 	}
 
-	return []Record{
-		testRecord{group.String(), fmt.Sprintf("%d", len(inputs))},
+	return []testRecord{
+		{group.String(), fmt.Sprintf("%d", len(inputs))},
 	}, nil
 }
 
 type testGenerator struct{}
 
 // 適当に2つのレコードを生成する
-func (g *testGenerator) Map(ctx context.Context, input Record) ([]Record, error) {
-	return []Record{
-		testRecord{"group1", "id1"},
-		testRecord{"error", "id2"},
+func (g *testGenerator) Map(ctx context.Context, input Origin) ([]testRecord, error) {
+	return []testRecord{
+		{"group1", "id1"},
+		{"error", "id2"},
 	}, nil
 }
 
 type testReducerAbort struct{}
 
-func (m *testReducerAbort) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
+func (m *testReducerAbort) Reduce(ctx context.Context, group Group, inputs []testRecord) ([]testRecord, error) {
 	outputs, err := (&testReducer{}).Reduce(ctx, group, inputs)
 	if err != nil {
 		return nil, AbortError(err)
@@ -111,12 +111,12 @@ func (m *testReducerAbort) Reduce(ctx context.Context, group Group, inputs []Rec
 type testGeneratorTimeout struct{}
 
 // 適当に2つのレコードを生成する
-func (g *testGeneratorTimeout) Map(ctx context.Context, input Record) ([]Record, error) {
-	return []Record{
-		testRecord{"group1", "id1"},
-		testRecord{"error", "id2"},
-		testRecord{"timeout", "id3"},
-		testRecord{"group4", "id4"},
+func (g *testGeneratorTimeout) Map(ctx context.Context, input Origin) ([]testRecord, error) {
+	return []testRecord{
+		{"group1", "id1"},
+		{"error", "id2"},
+		{"timeout", "id3"},
+		{"group4", "id4"},
 	}, nil
 }
 
@@ -124,6 +124,6 @@ type testBrokenGenerator struct{}
 
 var errTestBrokenGenerator = errors.New("test broken generator error")
 
-func (g *testBrokenGenerator) Map(ctx context.Context, input Record) ([]Record, error) {
+func (g *testBrokenGenerator) Map(ctx context.Context, input Origin) ([]testRecord, error) {
 	return nil, AbortError(errTestBrokenGenerator)
 }

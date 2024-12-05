@@ -125,12 +125,12 @@ Mapper / Reducer はそれぞれ次のようなインターフェースとして
 input には前段で出力されたレコードが入ります。型アサーションにより型を特定した上で必要な情報を参照します。
 
 ```go
-type Mapper interface {
-	Map(ctx context.Context, input Record) ([]Record, error)
+type Mapper[I Record, O Record] interface {
+	Map(ctx context.Context, input I) ([]O, error)
 }
 
-type Reducer interface {
-	Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error)
+type Reducer[I Record, O Record, G Group] interface {
+	Reduce(ctx context.Context, group G, inputs []I) ([]O, error)
 }
 ```
 
@@ -140,22 +140,20 @@ type Reducer interface {
 ```go
 type RegionLister struct{}
 
-func (l *RegionLister) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-	return []pipeline.Record{
-		&Region{Name: "ap-northeast-1"},
-		&Region{Name: "us-west-1"},
+func (l *RegionLister) Map(ctx context.Context, _ pipeline.Origin) ([]*Region, error) {
+	return []*Region{
+		{Name: "ap-northeast-1"},
+		{Name: "us-west-1"},
 	}, nil
 }
 
 type VMLister struct{}
 
-func (l *VMLister) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-	region := input.(*Region)
-
+func (l *VMLister) Map(ctx context.Context, region *Region) ([]*Instance, error) {
 	if region.Name == "ap-northeast-1" {
-		return []pipeline.Record{
-			&Instance{ID: "i-123"},
-			&Instance{ID: "i-456"},
+		return []*Instance{
+			{ID: "i-123"},
+			{ID: "i-456"},
 		}, nil
 	}
 
@@ -164,32 +162,28 @@ func (l *VMLister) Map(ctx context.Context, input pipeline.Record) ([]pipeline.R
 
 type Scanner struct{}
 
-func (l *Scanner) Map(ctx context.Context, input pipeline.Record) ([]pipeline.Record, error) {
-    instance := input.(*Instance)
+func (s *Scanner) Map(ctx context.Context, instance *Instance) ([]*Vulnerability, error) {
+	if instance.ID == "i-123" {
+		return nil, fmt.Errorf("failed to scan instance %s", instance.ID)
+	}
+	if instance.ID == "i-456" {
+		return []*Vulnerability{
+			{ID: "CVE-2020-5678"},
+			{ID: "CVE-2020-9012"},
+		}, nil
+	}
 
-    if instance.ID == "i-123" {
-    	return nil, fmt.Errorf("failed to scan instance %s", instance.ID)
-    }
-    if instance.ID == "i-456" {
-    	return []pipeline.Record{
-    		&Vulnerability{ID: "CVE-2020-5678"},
-    		&Vulnerability{ID: "CVE-2020-9012"},
-    	}, nil
-    }
-
-    return nil, nil
-
+	return nil, nil
 }
 
 type Counter struct{}
 
-func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, inputs []pipeline.Record) ([]pipeline.Record, error) {
-    vulnerabilityID := group.String()
+func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, vulnerabilities []*Vulnerability) ([]*VulnerabilityCount, error) {
+	vulnerabilityID := group.String()
 
-    return []pipeline.Record{
-    	&VulnerabilityCount{VulnerabilityID: vulnerabilityID, Count: len(inputs)},
-    }, nil
-
+	return []*VulnerabilityCount{
+		{VulnerabilityID: vulnerabilityID, Count: len(vulnerabilities)},
+	}, nil
 }
 ```
 
