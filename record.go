@@ -59,3 +59,17 @@ func (g groupCommit) Identifier() string {
 func EmptyGroup(g Group) groupCommit {
 	return groupCommit{g}
 }
+
+type GroupCommiter interface {
+	GroupCommit() bool
+}
+
+func isGroupCommit(record Record) bool {
+	if _, ok := record.(groupCommit); ok {
+		return true
+	}
+	if gc, ok := record.(GroupCommiter); ok && gc.GroupCommit() {
+		return true
+	}
+	return false
+}

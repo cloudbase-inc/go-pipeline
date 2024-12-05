@@ -29,6 +29,7 @@ func Test_mapProcessor_Process(t *testing.T) {
 					testRecord{"group1", "id1"},
 					testRecord{"error", "id2"},
 					GroupCommit(GroupString("group2")),
+					testRecord{"group3", ""}, // group commit
 				},
 			},
 			want: []Output{
@@ -38,7 +39,7 @@ func Test_mapProcessor_Process(t *testing.T) {
 					Records: []Record{
 						testRecord{"group1_mapped", "id1_1"},
 						testRecord{"group1_mapped", "id1_2"},
-						GroupCommit(GroupString("group1_empty")),
+						testRecord{"group1_empty", ""},
 					},
 				},
 				{
@@ -74,7 +75,7 @@ func Test_mapProcessor_Process(t *testing.T) {
 					Records: []Record{
 						testRecord{"group1_mapped", "id1_1"},
 						testRecord{"group1_mapped", "id1_2"},
-						GroupCommit(GroupString("group1_empty")),
+						testRecord{"group1_empty", ""},
 					},
 				},
 				// 順番に処理されるので、timeout以降のものは全てtimeoutとして処理される

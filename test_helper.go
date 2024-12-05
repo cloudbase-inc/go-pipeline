@@ -24,17 +24,21 @@ func (r testRecord) Identifier() string {
 	return r.identifier
 }
 
+func (r testRecord) GroupCommit() bool {
+	return r.identifier == ""
+}
+
 var errTestMapper = errors.New("test mapper error")
 
 // 適当にsuffixつけて倍増させる
-func (m *testMapper) Map(ctx context.Context, input Record) ([]Record, error) {
+func (m *testMapper) Map(ctx context.Context, input testRecord) ([]testRecord, error) {
 	gr := input.Group().String()
 
 	if strings.Contains(gr, "group1") {
-		return []Record{
-			testRecord{gr + "_mapped", input.Identifier() + "_1"},
-			testRecord{gr + "_mapped", input.Identifier() + "_2"},
-			GroupCommit(GroupString(gr + "_empty")),
+		return []testRecord{
+			{gr + "_mapped", input.Identifier() + "_1"},
+			{gr + "_mapped", input.Identifier() + "_2"},
+			{gr + "_empty", ""},
 		}, nil
 	}
 	// Error
@@ -48,14 +52,14 @@ func (m *testMapper) Map(ctx context.Context, input Record) ([]Record, error) {
 			return nil, ctx.Err()
 		case <-time.After(10 * time.Second):
 		}
-		return []Record{}, nil
+		return []testRecord{}, nil
 	}
 	return nil, nil
 }
 
 type testMapperAbort struct{}
 
-func (m *testMapperAbort) Map(ctx context.Context, input testRecord) ([]Record, error) {
+func (m *testMapperAbort) Map(ctx context.Context, input testRecord) ([]testRecord, error) {
 	outputs, err := (&testMapper{}).Map(ctx, input)
 	if err != nil {
 		return nil, AbortError(err)
