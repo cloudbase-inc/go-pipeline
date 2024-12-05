@@ -98,7 +98,7 @@ func (p *streamProcessor) Process(ctx context.Context, inputs <-chan Record, abo
 			for err := range errs {
 				if IsAbortError(err) {
 					abort <- err
-					continue
+					return
 				}
 
 				outputs <- Output{
