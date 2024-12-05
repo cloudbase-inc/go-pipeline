@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -30,6 +31,7 @@ func TestPipeline_Execute(t *testing.T) {
 					MapStage("Generator", &testGenerator{}),
 					MapStage("Map1", &testMapper{}),
 					MapStage("Map2", &testMapper{}),
+					StreamStage("Stream", &testStreamer{}),
 					ReduceStage("Reduce", &testReducer{}),
 				},
 			},
@@ -85,6 +87,47 @@ func TestPipeline_Execute(t *testing.T) {
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
 							GroupCount:  2,
+						},
+					},
+				},
+				{
+					Name: "Stream",
+					Type: ProcessorTypeStream,
+					Outputs: []SummarizedOutput{
+						{
+							Status: OutputStatusError,
+							Err:    errors.New("something wrong"),
+						},
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 1,
+							GroupCount:  1,
+						},
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 1,
+							GroupCount:  1,
+						},
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 1,
+							GroupCount:  1,
+						},
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 1,
+							GroupCount:  1,
+						},
+						// Group Commit
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 0,
+							GroupCount:  1,
+						},
+						{
+							Status:      OutputStatusSuccess,
+							RecordCount: 0,
+							GroupCount:  1,
 						},
 					},
 				},

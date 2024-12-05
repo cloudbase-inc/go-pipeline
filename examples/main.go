@@ -27,11 +27,21 @@ func (r *Region) Identifier() string    { return r.Name }
 
 type RegionLister struct{}
 
-func (l *RegionLister) Map(ctx context.Context, _ pipeline.Origin) ([]*Region, error) {
-	return []*Region{
-		{Name: "ap-northeast-1"},
-		{Name: "us-west-1"},
-	}, nil
+func (l *RegionLister) Stream(ctx context.Context, inputs <-chan pipeline.Origin) (<-chan *Region, <-chan error) {
+	<-inputs
+
+	outs := make(chan *Region)
+	errs := make(chan error)
+
+	go func() {
+		defer close(outs)
+		defer close(errs)
+
+		outs <- &Region{Name: "ap-northeast-1"}
+		outs <- &Region{Name: "us-west-1"}
+	}()
+
+	return outs, errs
 }
 
 type Instance struct {
@@ -102,7 +112,7 @@ func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, vulnerabilit
 
 func main() {
 	pp := pipeline.New(
-		pipeline.MapStage("RegionLister", &RegionLister{}),
+		pipeline.StreamStage("RegionLister", &RegionLister{}),
 		pipeline.MapStage("VMLister", &VMLister{}, pipeline.StageTimeout(1*time.Second)),
 		pipeline.MapStage("Scanner", &Scanner{}, pipeline.StageMaxParallel(3)),
 		pipeline.ReduceStage("Counter", &Counter{}, pipeline.StageAbortIfAnyError(true)),

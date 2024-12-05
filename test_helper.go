@@ -131,3 +131,68 @@ var errTestBrokenGenerator = errors.New("test broken generator error")
 func (g *testBrokenGenerator) Map(ctx context.Context, input Origin) ([]testRecord, error) {
 	return nil, AbortError(errTestBrokenGenerator)
 }
+
+type testStreamer struct{}
+
+func (s *testStreamer) Stream(ctx context.Context, inputs <-chan Record) (<-chan Record, <-chan error) {
+	outs := make(chan Record)
+	errs := make(chan error)
+
+	go func() {
+		defer close(outs)
+		defer close(errs)
+
+		// errorを1件発生させる
+		errs <- errors.New("something wrong")
+
+		// inputをそのまま流す
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case input, ok := <-inputs:
+				if !ok {
+					return
+				}
+				outs <- input
+			}
+		}
+	}()
+
+	return outs, errs
+}
+
+var errStreamFatal = errors.New("fatal stream error")
+
+type testStreamerFatalError struct{}
+
+func (s *testStreamerFatalError) Stream(ctx context.Context, inputs <-chan Record) (<-chan Record, <-chan error) {
+	outs := make(chan Record)
+	errs := make(chan error)
+
+	go func() {
+		defer close(outs)
+		defer close(errs)
+
+		// クリティカルなエラーを返す
+		errs <- AbortError(errStreamFatal)
+	}()
+
+	return outs, errs
+}
+
+type testStreamerTimeout struct{}
+
+func (s *testStreamerTimeout) Stream(ctx context.Context, inputs <-chan Record) (<-chan Record, <-chan error) {
+	outs := make(chan Record)
+	errs := make(chan error)
+
+	go func() {
+		defer close(outs)
+		defer close(errs)
+
+		<-time.After(10 * time.Second)
+	}()
+
+	return outs, errs
+}
