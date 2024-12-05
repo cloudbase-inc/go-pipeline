@@ -22,7 +22,7 @@ type reduceWrapper[I Record, O Record, G Group] struct {
 	reducer Reducer[I, O, G]
 }
 
-func (m *reduceWrapper[I, O, G]) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
+func (w *reduceWrapper[I, O, G]) Reduce(ctx context.Context, group Group, inputs []Record) ([]Record, error) {
 	g := group.(G)
 
 	var ins []I
@@ -30,7 +30,7 @@ func (m *reduceWrapper[I, O, G]) Reduce(ctx context.Context, group Group, inputs
 		ins = append(ins, i.(I))
 	}
 
-	outs, err := m.reducer.Reduce(ctx, g, ins)
+	outs, err := w.reducer.Reduce(ctx, g, ins)
 	if err != nil {
 		return nil, err
 	}

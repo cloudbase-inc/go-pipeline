@@ -22,10 +22,10 @@ type mapWrapper[I Record, O Record] struct {
 	mapper Mapper[I, O]
 }
 
-func (m *mapWrapper[I, O]) Map(ctx context.Context, input Record) ([]Record, error) {
+func (w *mapWrapper[I, O]) Map(ctx context.Context, input Record) ([]Record, error) {
 	i := input.(I)
 
-	outs, err := m.mapper.Map(ctx, i)
+	outs, err := w.mapper.Map(ctx, i)
 	if err != nil {
 		return nil, err
 	}

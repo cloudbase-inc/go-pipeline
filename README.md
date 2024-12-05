@@ -34,7 +34,7 @@ https://www.talend.com/jp/resources/what-is-mapreduce/
 `list(<group1, id1>) -> Stage() -> list(<group2, id2>)`
 
 実際の計算処理を実行する部分です。各ステージはレコードの集合を受け取り、何らかの処理を行なって加工したデータをレコードの集合として返す必要があります。
-MapReduce を参考に、現在 Mapper と Reducer という 2 つの処理アルゴリズムが実装されています。
+MapReduce を参考に、現在 Mapper と Reducer、および Streamer という 3 つの処理アルゴリズムが実装されています。
 
 #### マッパー (Mapper)
 
@@ -47,6 +47,12 @@ MapReduce を参考に、現在 Mapper と Reducer という 2 つの処理ア�
 `<group1, list(id1)> -> Reduce() -> list(<group2, id2>)`
 
 前段のレコードをグループ化し、各グループのレコードの集合に対して複数のレコードを返す関数として表現され、それらをグループ単位で並列に複数実行することで全体の結果を返します。主に後段の処理で加工されたデータを集約し集計や保存処理を行うために利用することができます。
+
+#### ストリーマー (Streamer)
+
+`channel(<group1, id1>) -> Streamer() -> channel(<group2, id2>)`
+
+レコードを逐次受け取り、逐次出力を返すようなストリーム処理を表現します。Mapper や Reducer での表現が難しい非同期処理を記述する場合に利用します。例えば、大量のデータを生成するような Mapper を実装する際、 代わりに Streamer で逐次結果を返すようにすることで、メモリ使用量を抑えられる他後続の処理を逐次開始することができパフォーマンスの向上も見込めます。
 
 ### アウトプット (Output)
 
@@ -118,9 +124,9 @@ func (v *VulnerabilityCount) Identifier() string    { return pipeline.Identifier
 
 </details>
 
-### 2. Mapper / Reducer を実装する
+### 2. Mapper / Reducer / Streamer を実装する
 
-Mapper / Reducer はそれぞれ次のようなインターフェースとして定義されています。これらを満たす型を実装します。
+Mapper / Reducer / Streamer はそれぞれ次のようなインターフェースとして定義されています。これらを満たす型を実装します。
 
 input には前段で出力されたレコードが入ります。型アサーションにより型を特定した上で必要な情報を参照します。
 
@@ -132,6 +138,10 @@ type Mapper[I Record, O Record] interface {
 type Reducer[I Record, O Record, G Group] interface {
 	Reduce(ctx context.Context, group G, inputs []I) ([]O, error)
 }
+
+type Streamer[I Record, O Record] interface {
+	Stream(ctx context.Context, inputs <-chan I) (<-chan O, <-chan error)
+}
 ```
 
 <details>
@@ -140,11 +150,21 @@ type Reducer[I Record, O Record, G Group] interface {
 ```go
 type RegionLister struct{}
 
-func (l *RegionLister) Map(ctx context.Context, _ pipeline.Origin) ([]*Region, error) {
-	return []*Region{
-		{Name: "ap-northeast-1"},
-		{Name: "us-west-1"},
-	}, nil
+func (l *RegionLister) Stream(ctx context.Context, inputs <-chan pipeline.Origin) (<-chan *Region, <-chan error) {
+	<-inputs
+
+	outs := make(chan *Region)
+	errs := make(chan error)
+
+	go func() {
+		defer close(outs)
+		defer close(errs)
+
+		outs <- &Region{Name: "ap-northeast-1"}
+		outs <- &Region{Name: "us-west-1"}
+	}()
+
+	return outs, errs
 }
 
 type VMLister struct{}
@@ -195,19 +215,18 @@ func (c *Counter) Reduce(ctx context.Context, group pipeline.Group, vulnerabilit
 
 ```go
 pp := pipeline.New(
-    pipeline.MapStage("RegionLister", &RegionLister{}),
+    pipeline.StreamStage("RegionLister", &RegionLister{}),
     pipeline.MapStage("VMLister", &VMLister{}, pipeline.StageTimeout(1*time.Second)),
     pipeline.MapStage("Scanner", &Scanner{}, pipeline.StageMaxParallel(3)),
     pipeline.ReduceStage("Counter", &Counter{}, pipeline.StageAbortIfAnyError(true)),
 )
 ```
 
-MapStage もしくは ReduceStage を使って、定義した Mapper や Reducer をパイプラインに組み込むことができます。
+`(Mapper|Reducer|Streamer)Stage()` を使って、定義した処理をパイプラインに組み込むことができます。
 またオプション引数で以下の値を設定できます。
 
 - `StageTimeout(d time.Duration)`: ステージ単位のタイムアウト。タイムアウト前に正常に完了したレコードは後続のステージに渡されそのまま実行されていきます。
-- `StageMaxParallel(n int)`: 並列実行数の上限を指定します。Mapper の場合はレコード、Reducer の場合はグループの数が最大の並列数になります。
-- `StageAbortIfAnyError(v bool)`: `true` に設定した場合、実行されているワーカーのいずれかでエラーが発生したらクリティカルなエラーとして全体の処理を中止します。データの保存など、失敗が許容されないクリティカルなステージに対して有効化してください。
+- `StageMaxParallel(n int)`: 並列実行数の上限を指定します。Mapper の場合はレコード、Reducer の場合はグループの数が最大の並列数になります。（StreamStage では利用不可）
 
 ### 4. Pipeline を実行する
 

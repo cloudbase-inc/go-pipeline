@@ -31,6 +31,10 @@ func ReduceStage[I Record, O Record, G Group](name string, reducer Reducer[I, O,
 	return Stage(newReduceProcessor(name, reducer), opts...)
 }
 
+func StreamStage[I Record, O Record](name string, streamer Streamer[I, O]) *PipelineStage {
+	return Stage(newStreamProcessor(name, streamer))
+}
+
 /* 実行時オプション */
 func StageMaxParallel(max int) PipelineStageOption {
 	return func(s *PipelineStage) {

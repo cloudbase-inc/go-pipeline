@@ -19,6 +19,7 @@ type ProcessorType string
 const (
 	ProcessorTypeMap    ProcessorType = "Map"
 	ProcessorTypeReduce ProcessorType = "Reduce"
+	ProcessorTypeStream ProcessorType = "Stream"
 )
 
 type OutputStatus string
