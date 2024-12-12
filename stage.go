@@ -57,9 +57,8 @@ func StageTimeout(timeout time.Duration) PipelineStageOption {
 
 // ステージの実行結果
 type StageExecution struct {
-	Name        string
-	Type        ProcessorType
-	GroupCount  int
-	RecordCount int
-	Outputs     []SummarizedOutput // deprecated
+	Name       string
+	Type       ProcessorType
+	GroupCount int
+	Outputs    []SummarizedOutput
 }

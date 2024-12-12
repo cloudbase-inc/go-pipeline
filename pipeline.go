@@ -58,17 +58,12 @@ func (p *Pipeline) Execute(ctx context.Context) (outputs []Record, stages []Stag
 			pr := stage.processor
 
 			groups := make(map[string]struct{})
-			recordCount := 0
 
 			summarizedOutputs := []SummarizedOutput{}
 			for o := range pr.Process(ctx, stageInputs[i], abort) {
 				// 前段のoutputを、次のinputに入れる
 				for _, r := range o.Records {
 					groups[r.Group().String()] = struct{}{}
-					if !isGroupCommit(r) {
-						recordCount++
-					}
-
 					stageInputs[i+1] <- r
 				}
 				summarizedOutputs = append(summarizedOutputs, o.Summarized())
@@ -77,11 +72,10 @@ func (p *Pipeline) Execute(ctx context.Context) (outputs []Record, stages []Stag
 			// 前段のinputsがcloseしない限り次のstageが終わることはないので、
 			// ここは排他制御する必要はない
 			stages = append(stages, StageExecution{
-				Name:        pr.Name(),
-				Type:        pr.Type(),
-				GroupCount:  len(groups),
-				RecordCount: recordCount,
-				Outputs:     summarizedOutputs,
+				Name:       pr.Name(),
+				Type:       pr.Type(),
+				GroupCount: len(groups),
+				Outputs:    summarizedOutputs,
 			})
 
 			close(stageInputs[i+1])

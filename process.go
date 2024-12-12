@@ -40,7 +40,6 @@ type SummarizedOutput struct {
 	Unit        string
 	Status      OutputStatus
 	RecordCount int
-	GroupCount  int
 	Err         error
 }
 
@@ -58,7 +57,6 @@ func (o Output) Summarized() SummarizedOutput {
 		Unit:        o.Unit,
 		Status:      o.Status,
 		RecordCount: recordCount,
-		GroupCount:  len(groups),
 		Err:         o.Err,
 	}
 }

@@ -27,7 +27,6 @@ func TestOutput_Summarized(t *testing.T) {
 				Unit:        "unit",
 				Status:      OutputStatusError,
 				RecordCount: 1,
-				GroupCount:  2,
 				Err:         errTestMapper,
 			},
 		},
