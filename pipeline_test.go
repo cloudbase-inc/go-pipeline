@@ -44,26 +44,26 @@ func TestPipeline_Execute(t *testing.T) {
 			},
 			wantStages: []StageExecution{
 				{
-					Name: "Generator",
-					Type: ProcessorTypeMap,
+					Name:       "Generator",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "*/*",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 					},
 				},
 				{
-					Name: "Map1",
-					Type: ProcessorTypeMap,
+					Name:       "Map1",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1/id1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:   "error/id2",
@@ -73,26 +73,26 @@ func TestPipeline_Execute(t *testing.T) {
 					},
 				},
 				{
-					Name: "Map2",
-					Type: ProcessorTypeMap,
+					Name:       "Map2",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1_mapped/id1_1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:        "group1_mapped/id1_2",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 					},
 				},
 				{
-					Name: "Stream",
-					Type: ProcessorTypeStream,
+					Name:       "Stream",
+					Type:       ProcessorTypeStream,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Status: OutputStatusError,
@@ -101,51 +101,44 @@ func TestPipeline_Execute(t *testing.T) {
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						// Group Commit
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 0,
-							GroupCount:  1,
 						},
 						{
 							Status:      OutputStatusSuccess,
 							RecordCount: 0,
-							GroupCount:  1,
 						},
 					},
 				},
 				{
-					Name: "Reduce",
-					Type: ProcessorTypeReduce,
+					Name:       "Reduce",
+					Type:       ProcessorTypeReduce,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1_mapped_mapped",
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						{
 							Unit:        "group1_mapped_empty",
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 					},
 				},
@@ -173,26 +166,26 @@ func TestPipeline_Execute(t *testing.T) {
 			},
 			wantStages: []StageExecution{
 				{
-					Name: "Generator",
-					Type: ProcessorTypeMap,
+					Name:       "Generator",
+					Type:       ProcessorTypeMap,
+					GroupCount: 4,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "*/*",
 							Status:      OutputStatusSuccess,
 							RecordCount: 4,
-							GroupCount:  4,
 						},
 					},
 				},
 				{
-					Name: "Map1",
-					Type: ProcessorTypeMap,
+					Name:       "Map1",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1/id1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:   "error/id2",
@@ -213,27 +206,27 @@ func TestPipeline_Execute(t *testing.T) {
 				},
 				// mapperは前段で出力されたものを順次処理していくため、timeoutが発生したかどうかに関係なく処理を続行することができる
 				{
-					Name: "Map2",
-					Type: ProcessorTypeMap,
+					Name:       "Map2",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1_mapped/id1_1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:        "group1_mapped/id1_2",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 					},
 				},
 				// GroupCommitによって先にコミットされたグループのみ、正常に処理される
 				{
-					Name: "Reduce",
-					Type: ProcessorTypeReduce,
+					Name:       "Reduce",
+					Type:       ProcessorTypeReduce,
+					GroupCount: 1,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:   "group1_mapped_mapped",
@@ -244,7 +237,6 @@ func TestPipeline_Execute(t *testing.T) {
 							Unit:        "group1_mapped_empty",
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 					},
 				},
@@ -269,26 +261,26 @@ func TestPipeline_Execute(t *testing.T) {
 			},
 			wantStages: []StageExecution{
 				{
-					Name: "Generator",
-					Type: ProcessorTypeMap,
+					Name:       "Generator",
+					Type:       ProcessorTypeMap,
+					GroupCount: 4,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "*/*",
 							Status:      OutputStatusSuccess,
 							RecordCount: 4,
-							GroupCount:  4,
 						},
 					},
 				},
 				{
-					Name: "Map1",
-					Type: ProcessorTypeMap,
+					Name:       "Map1",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1/id1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:   "error/id2",
@@ -309,38 +301,36 @@ func TestPipeline_Execute(t *testing.T) {
 				},
 				// Map1はステージ単位でタイムアウトになるが、後続の処理は正常に完了する
 				{
-					Name: "Map2",
-					Type: ProcessorTypeMap,
+					Name:       "Map2",
+					Type:       ProcessorTypeMap,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1_mapped/id1_1",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 						{
 							Unit:        "group1_mapped/id1_2",
 							Status:      OutputStatusSuccess,
 							RecordCount: 2,
-							GroupCount:  2,
 						},
 					},
 				},
 				{
-					Name: "Reduce",
-					Type: ProcessorTypeReduce,
+					Name:       "Reduce",
+					Type:       ProcessorTypeReduce,
+					GroupCount: 2,
 					Outputs: []SummarizedOutput{
 						{
 							Unit:        "group1_mapped_mapped",
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 						{
 							Unit:        "group1_mapped_empty",
 							Status:      OutputStatusSuccess,
 							RecordCount: 1,
-							GroupCount:  1,
 						},
 					},
 				},
@@ -388,6 +378,7 @@ func TestPipeline_Execute(t *testing.T) {
 			for i, expected := range tt.wantStages {
 				assert.Equal(t, expected.Name, stages[i].Name)
 				assert.Equal(t, expected.Type, stages[i].Type)
+				assert.Equal(t, expected.GroupCount, stages[i].GroupCount)
 				assert.ElementsMatch(t, expected.Outputs, stages[i].Outputs)
 			}
 		})
